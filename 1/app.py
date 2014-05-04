@@ -3,9 +3,13 @@ from flask import Flask, render_template
 import urllib2
 import json
 import string
+import re
 
 app = Flask(__name__)
 app.debug = True
+
+def addSignature(html, username):
+       return html + "<a href=http://osu.ppy.sh/u/"+username.replace(' ','%20')+"><img src=\"http://osusig.ppy.sh/image1.png?uid="+username+"&m=0\"/></a>" 
 
 @app.route("/")
 def hello():
@@ -14,14 +18,34 @@ def hello():
 例子：osuuserinfo.sinaapp.com/userinfo/Grit,Yakumo Yukari,crucify_m_l,Kotono Yuuri<br>
 <br>
 <a href=/userinfocollege
->显示高校赛队伍与选手信息</a>'''
+>高校赛队伍与选手信息</a><br>
+<br>
+当前版本：v1.1 <a href=/version>改动日志</a><br>
+<br>
+BUG与意见欢迎发邮件至grit31@126.com，或在游戏内PM <a href=http://osu.ppy.sh/u/Grit>Grit</a>'''
+
+@app.route("/version")
+def version():
+        return '''
+2014/4/29 v1.0 初版<br>
+2014/5/4 v1.1 增加到玩家主页的链接'''
+
+@app.route("/friends")
+def friends():
+        html = ""
+        url_friend = "http://osu.ppy.sh/forum/ucp.php"
+        response = urllib2.urlopen(url_friend).read()
+        pattern = "<span class='profile_friend .*?'><a href=.*?>(.*?)</a></span>"
+        p = re.compile(pattern)
+        result = p.findall(response)
+        return response
 
 @app.route("/userinfo/<users>")
 def userinfo(users):
         userlist = users.split(',')
         html = "";
         for user in userlist:
-                html += "<img src=\"http://osusig.ppy.sh/image1.png?uid="+user+"&m=0\"/>"
+                html = addSignature(html, user)
 	return html
 
 @app.route("/userinfocollege")
@@ -65,7 +89,7 @@ kamisamaaa,knightkh,haodumiao,azraelim,xiaodingding'''
                 html += teamnameList[i]+"<br>"
                 memberList = teammemberList[i].split(',')
                 for member in memberList:
-                        html += "<img src=\"http://osusig.ppy.sh/image1.png?uid="+member+"&m=0\"/>"
+                        html = addSignature(html, member)
                 html += "<br><br>"
         html += "</body>"
         return html
